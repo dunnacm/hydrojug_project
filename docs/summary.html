@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HydroJugg Phase II – Demand vs Inventory (Example Report)</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      margin: 2rem auto;
+      max-width: 1000px;
+      line-height: 1.5;
+      padding: 0 1rem;
+      color: #111;
+    }
+    h1, h2, h3 { line-height: 1.2; }
+    .callout {
+      background: #f6f8fa;
+      border: 1px solid #d0d7de;
+      border-radius: 8px;
+      padding: 1rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    .kpi {
+      padding: 0.75rem 1rem;
+      border: 1px solid #d0d7de;
+      border-radius: 8px;
+    }
+    .kpi .label { font-size: 0.9rem; color: #555; }
+    .kpi .value { font-size: 1.35rem; font-weight: 700; }
+    img {
+      max-width: 100%;
+      height: auto;
+      border: 1px solid #d0d7de;
+      border-radius: 8px;
+      background: white;
+    }
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.75rem 0 1.5rem 0;
+      font-size: 0.95rem;
+    }
+    .table th, .table td {
+      border-bottom: 1px solid #eaeef2;
+      padding: 0.5rem 0.4rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    .table th {
+      position: sticky;
+      top: 0;
+      background: #fff;
+      border-bottom: 2px solid #d0d7de;
+    }
+    .muted { color: #555; }
+    code {
+      background: #f6f8fa;
+      padding: 0.1rem 0.25rem;
+      border-radius: 4px;
+    }
+    footer {
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid #eaeef2;
+      color: #555;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Demand vs Inventory (5‑Month Horizon) – Example HTML Output</h1>
+
+  <div class="callout">
+    <p><strong>Horizon months:</strong> 2025-11, 2025-12, 2026-01, 2026-02, 2026-03</p>
+    <p class="muted">
+      This is an <em>example</em> of what your final GitHub Pages deliverable can look like.
+      It is generated from the workbook and the assumptions described below.
+    </p>
+  </div>
+
+  <h2>Key assumptions implemented</h2>
+  <ul>
+    <li><strong>Combined demand:</strong> forecast plus open orders, but to avoid double‑counting we treat open orders as replacing forecast when open orders exceed forecast (per SKU per channel).</li>
+    <li><strong>Scope:</strong> only UPCs that appear in the <code>Inventory</code> sheet are assessed.</li>
+    <li><strong>Supply:</strong> starting <code>On Hand</code> plus <code>Incoming</code> that has an expected date inside the horizon.</li>
+    <li><strong>Lead time:</strong> 90 days (used for interpretation/recommendations; not explicitly optimized in this example output).</li>
+    <li><strong>Data quality:</strong> inventory rows with an incoming date of <code>2025‑03‑17</code> were treated as a likely year typo and shifted to <code>2026‑03‑17</code>; rows with <code>########</code> as a date were treated as unknown.</li>
+  </ul>
+
+  <h2>Top‑level totals</h2>
+  <div class="grid">
+    <div class="kpi"><div class="label">Combined demand (units)</div><div class="value">652,907</div></div>
+    <div class="kpi"><div class="label">On hand (units)</div><div class="value">407,009</div></div>
+    <div class="kpi"><div class="label">Incoming within horizon (units)</div><div class="value">537,920</div></div>
+    <div class="kpi"><div class="label">Supply − demand (units)</div><div class="value">292,022</div></div>
+  </div>
+
+  <p class="muted">
+    Even though total supply exceeds total demand, inventory is not interchangeable across UPCs.
+    Timing and SKU‑level imbalances create backorders/shortages.
+  </p>
+
+  <h2>Timing risk</h2>
+  <p>
+    Under the modeled demand/supply timing, <strong>97</strong> UPCs go negative (i.e., would be backordered) at least once within the horizon,
+    and the peak projected backlog reaches <strong>107,512</strong> units.
+  </p>
+
+  <img src="demand_vs_receipts.png" alt="Demand vs incoming receipts chart">
+  <p></p>
+  <img src="backlog.png" alt="Backlog chart">
+
+  <h2>SKU‑level order requirement (end‑of‑horizon deficit)</h2>
+  <p>
+    <strong>35</strong> UPCs end the horizon with insufficient supply (even after expected receipts),
+    totaling <strong>68,248</strong> units that must be covered by either:
+    (a) ordering additional inventory (subject to the 90‑day lead time), or
+    (b) pushing demand beyond the 5‑month horizon (e.g., into 2026‑04 and later).
+  </p>
+
+  <h3>Top 10 UPCs by end‑of‑horizon shortage</h3>
+  <table class="dataframe table">
+  <thead>
+    <tr style="text-align: left;">
+      <th>upc</th>
+      <th>product</th>
+      <th>color</th>
+      <th>end_shortage_qty</th>
+      <th>total_demand</th>
+      <th>on_hand</th>
+      <th>total_receipts</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>810084151136</td>
+      <td>Traveler 32oz</td>
+      <td>Cream</td>
+      <td>10,262</td>
+      <td>20,734</td>
+      <td>10472</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>810084150450</td>
+      <td>Sport Kids 14oz</td>
+      <td>Dinosaur</td>
+      <td>9,989</td>
+      <td>24,010</td>
+      <td>42</td>
+      <td>13,979</td>
+    </tr>
+    <tr>
+      <td>810084159095</td>
+      <td>Traveler 40oz</td>
+      <td>Black Leopard</td>
+      <td>7,693</td>
+      <td>8,046</td>
+      <td>353</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>810084152034</td>
+      <td>Traveler 32oz</td>
+      <td>Black Leopard</td>
+      <td>5,981</td>
+      <td>6,181</td>
+      <td>200</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>850010870250</td>
+      <td>Squeeze Bottle 27oz</td>
+      <td>Mauve</td>
+      <td>4,692</td>
+      <td>4,721</td>
+      <td>29</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>840494401491</td>
+      <td>Everyday Tumbler 14oz</td>
+      <td>Brown Leopard</td>
+      <td>4,245</td>
+      <td>4,254</td>
+      <td>9</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>810084151495</td>
+      <td>Traveler 32oz</td>
+      <td>Pink Sugar</td>
+      <td>3,433</td>
+      <td>3,509</td>
+      <td>76</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>810084159422</td>
+      <td>Sport 32oz</td>
+      <td>Black Leopard</td>
+      <td>2,663</td>
+      <td>2,671</td>
+      <td>8</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>810140556110</td>
+      <td>Sport 20oz</td>
+      <td>Black Leopard</td>
+      <td>2,215</td>
+      <td>2,343</td>
+      <td>128</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>810084154786</td>
+      <td>Squeeze Bottle 27oz</td>
+      <td>Cobalt</td>
+      <td>1,559</td>
+      <td>2,598</td>
+      <td>1039</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+
+  <h3>Top 10 UPCs by worst in‑horizon backlog (timing shortage)</h3>
+  <table class="dataframe table">
+  <thead>
+    <tr style="text-align: left;">
+      <th>upc</th>
+      <th>product</th>
+      <th>color</th>
+      <th>shortage_qty</th>
+      <th>min_inv</th>
+      <th>total_demand</th>
+      <th>on_hand</th>
+      <th>total_receipts</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>810084150450</td>
+      <td>Sport Kids 14oz</td>
+      <td>Dinosaur</td>
+      <td>15,419</td>
+      <td>-15,419</td>
+      <td>24,010</td>
+      <td>42</td>
+      <td>13,979</td>
+    </tr>
+    <tr>
+      <td>810084150771</td>
+      <td>Traveler 32oz</td>
+      <td>Pink Sand</td>
+      <td>12,465</td>
+      <td>-12,465</td>
+      <td>25,694</td>
+      <td>5825</td>
+      <td>28,984</td>
+    </tr>
+    <tr>
+      <td>810084151136</td>
+      <td>Traveler 32oz</td>
+      <td>Cream</td>
+      <td>10,262</td>
+      <td>-10,262</td>
+      <td>20,734</td>
+      <td>10472</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>810084159040</td>
+      <td>Traveler 40oz</td>
+      <td>Pink Sand</td>
+      <td>8,619</td>
+      <td>-8,619</td>
+      <td>35,184</td>
+      <td>22524</td>
+      <td>29,102</td>
+    </tr>
+    <tr>
+      <td>810084159095</td>
+      <td>Traveler 40oz</td>
+      <td>Black Leopard</td>
+      <td>7,693</td>
+      <td>-7,693</td>
+      <td>8,046</td>
+      <td>353</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>810084152034</td>
+      <td>Traveler 32oz</td>
+      <td>Black Leopard</td>
+      <td>5,981</td>
+      <td>-5,981</td>
+      <td>6,181</td>
+      <td>200</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>810140552518</td>
+      <td>Traveler 20oz</td>
+      <td>Pink Sand</td>
+      <td>5,649</td>
+      <td>-5,649</td>
+      <td>9,246</td>
+      <td>609</td>
+      <td>8,723</td>
+    </tr>
+    <tr>
+      <td>850010870250</td>
+      <td>Squeeze Bottle 27oz</td>
+      <td>Mauve</td>
+      <td>4,692</td>
+      <td>-4,692</td>
+      <td>4,721</td>
+      <td>29</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>810140552464</td>
+      <td>Traveler 20oz</td>
+      <td>Cream</td>
+      <td>4,359</td>
+      <td>-4,359</td>
+      <td>9,419</td>
+      <td>1423</td>
+      <td>10,178</td>
+    </tr>
+    <tr>
+      <td>840494401491</td>
+      <td>Everyday Tumbler 14oz</td>
+      <td>Brown Leopard</td>
+      <td>4,245</td>
+      <td>-4,245</td>
+      <td>4,254</td>
+      <td>9</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+
+  <footer>
+    Generated from <code>Data Analysis Exercise_Phase II.xlsx</code>. Adapt this template to match your final assumptions and narrative.
+  </footer>
+</body>
+</html>
